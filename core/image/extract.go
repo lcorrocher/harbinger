@@ -14,6 +14,7 @@ type ExtractedImage struct {
 	cleanup  func() error
 }
 
+// Cleanup removes extracted filesystem from disk
 func (e *ExtractedImage) Cleanup() error {
 	if e.cleanup != nil {
 		return e.cleanup()
@@ -21,6 +22,8 @@ func (e *ExtractedImage) Cleanup() error {
 	return nil
 }
 
+// Extract unpack image layers into temp dir
+// handles whiteout files (.wh.*)
 func (image *Image) Extract() (*ExtractedImage, error) {
 	root, err := os.MkdirTemp("", "harbinger-*")
 	if err != nil {
@@ -39,6 +42,7 @@ func (image *Image) Extract() (*ExtractedImage, error) {
 	}
 
 	for i, layer := range layers {
+		//each layer is gzip-compressed tar archive
 		rc, err := layer.Uncompressed()
 		if err != nil {
 			return nil, fmt.Errorf("open layer %d: %w", i, err)
@@ -58,6 +62,12 @@ func (image *Image) Extract() (*ExtractedImage, error) {
 	}, nil
 }
 
+// extractTar unpacks a single tar stream into destDir
+// considers
+// - path traversal: rejects malware whose resolved path escapes destDir ("../../etc/passwd"")
+// - whiteout files: skipped. OCI layers ".wh." to mark deletions
+// - symlinks: written as symlinks, not followed
+// - hard links: checked for path traversal
 func extractTar(r io.Reader, destDir string) error {
 	tr := tar.NewReader(r)
 
@@ -81,6 +91,8 @@ func extractTar(r io.Reader, destDir string) error {
 
 		base := filepath.Base(cleanName)
 		if strings.HasPrefix(base, ".wh.") {
+			// opaque whiteout (.wh..wh..opq) marks entire dir as replaced
+			// regular whiteout (.wh.*) marks specific file as deleted
 			if base == ".wh..wh..opq" {
 				dir := filepath.Dir(destPath)
 				if err := removeContents(dir); err != nil {
@@ -108,6 +120,7 @@ func extractTar(r io.Reader, destDir string) error {
 				return fmt.Errorf("create file %s: %w", destPath, err)
 			}
 
+			// limit file copy size to 512MB - prevents zip bombs in malware
 			const maxFileSize = 512 << 20
 			if _, err := io.Copy(f, io.LimitReader(tr, maxFileSize)); err != nil {
 				f.Close()
@@ -144,6 +157,7 @@ func extractTar(r io.Reader, destDir string) error {
 	return nil
 }
 
+// removeContents removes all entries inside dir without removing dir itself
 func removeContents(dir string) error {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
