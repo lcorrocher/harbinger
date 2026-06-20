@@ -100,7 +100,10 @@ func extractTar(r io.Reader, destDir string) error {
 				}
 			} else {
 				target := filepath.Join(filepath.Dir(destPath), strings.TrimPrefix(base, ".wh."))
-				os.Remove(target)
+				err := os.Remove(target)
+				if err != nil {
+					return err
+				}
 			}
 			continue
 		}

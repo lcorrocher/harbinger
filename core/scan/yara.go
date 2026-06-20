@@ -47,7 +47,7 @@ func NewYARAScanner(rulesDir string) (*YARAScanner, error) {
 		if err != nil {
 			return fmt.Errorf("open rule file %s: %w", path, err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }() // ignore error
 
 		namespace := filepath.Base(path)
 		if err := compiler.AddFile(f, namespace); err != nil {
@@ -82,9 +82,15 @@ func (s *YARAScanner) ScanDir(ctx context.Context, rootPath string) <-chan YARAF
 	go func() {
 		defer close(out)
 
-		// get all paths
+		// get all paths - respect context cancellation
 		var paths []string
 		_ = filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+
 			if err != nil || d.IsDir() {
 				return nil
 			}
@@ -95,7 +101,6 @@ func (s *YARAScanner) ScanDir(ctx context.Context, rootPath string) <-chan YARAF
 			return nil
 		})
 
-		// worker pool
 		workers := runtime.NumCPU()
 		work := make(chan string, workers)
 
