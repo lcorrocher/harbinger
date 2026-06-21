@@ -5,7 +5,8 @@ go 1.26.3
 require (
 	github.com/anchore/syft v1.45.1
 	github.com/google/go-containerregistry v0.21.6
-	github.com/hillu/go-yara/v4 v4.3.4
+	github.com/hillu/go-yara/v4 v4.2.0
+	modernc.org/sqlite v1.52.0
 )
 
 require (
@@ -278,5 +279,4 @@ require (
 	modernc.org/libc v1.72.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.52.0 // indirect
 )

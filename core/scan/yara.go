@@ -74,7 +74,7 @@ func NewYARAScanner(rulesDir string) (*YARAScanner, error) {
 }
 
 // ScanDir collects paths, then distributes to workers to scan - memory overhead (stores all paths)
-// Alternative approach (future) - collect paths and distribute to workers concurrently....
+// TODO Alternative approach (future) - collect paths and distribute to workers concurrently....
 // Context used for cancellations/timeouts
 func (s *YARAScanner) ScanDir(ctx context.Context, rootPath string) <-chan YARAFinding {
 	out := make(chan YARAFinding, 64)
