@@ -1,0 +1,25 @@
+replicaCount: 2
+
+image:
+  repository: us-central1-docker.pkg.dev/lcorrocher/harbinger/harbinger
+  #  image digest (sha256:...)
+  tag: "" # injected by CI
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+cronjob:
+  enabled: false
+
+networkPolicy:
+  enabled: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

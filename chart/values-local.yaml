@@ -1,0 +1,37 @@
+replicaCount: 1
+
+image:
+  repository: localhost:5000/harbinger
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+# Use read-only, non-root container for safety in dev too
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+cronjob:
+  enabled: false
+
+networkPolicy:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 50m            # relaxed for local — kind nodes are resource-constrained
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+
+

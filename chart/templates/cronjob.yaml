@@ -1,0 +1,28 @@
+{{- if .Values.cronjob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "chart.fullname" . }}-cron
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+spec:
+  schedule: "{{ .Values.cronjob.schedule }}" # e.g., "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ include "chart.serviceAccountName" . }}
+          restartPolicy: OnFailure
+          containers:
+            - name: cron-scan
+              image: "{{ .Values.cronjob.image.repository }}:{{ .Values.cronjob.image.tag }}"
+              imagePullPolicy: {{ .Values.cronjob.image.pullPolicy }}
+              command: ["/bin/sh", "-c"]
+              args:
+                - >
+                  # Example curl to trigger a scan (replace payload or script as needed)
+                  curl -s -X POST http://{{ include "chart.fullname" . }}:{{ .Values.service.port }}/scan -H 'Content-Type: application/json' -d '{"image":"alpine:3.18"}'
+{{- end }}
