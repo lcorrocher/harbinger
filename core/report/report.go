@@ -87,5 +87,28 @@ func Assemble(ctx context.Context, imageRef, digest string, doc *sbom.Document, 
 		}
 	}
 
+	hasYara := false
+	hasCVE := false
+	for _, f := range rep.Findings {
+		if f.Type == FindingTypeYARA {
+			hasYara = true
+		}
+		if f.Type == FindingTypeCVE {
+			hasCVE = true
+		}
+	}
+	if !hasYara {
+		rep.Findings = append(rep.Findings, Finding{
+			Type:   FindingTypeYARA,
+			Detail: "No YARA findings detected, BUT stay vigilant!",
+		})
+	}
+	if !hasCVE {
+		rep.Findings = append(rep.Findings, Finding{
+			Type:   FindingTypeCVE,
+			Detail: "No CVEs detected BUT stay vigilant!",
+		})
+	}
+
 	return rep, nil
 }
