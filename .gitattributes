@@ -1,0 +1,5 @@
+# Force Go to be detected
+*.go linguist-language=Go
+
+# Exclude
+chart/** linguist-vendored
